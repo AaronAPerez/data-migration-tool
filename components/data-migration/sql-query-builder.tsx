@@ -1,17 +1,24 @@
-import React, { useEffect, useState } from 'react'
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
+interface SQLQueryBuilderProps {
+  tables?: Record<string, { columns: string[] }>;
+}
 
-
-//  SQL Query Builder Component
-//  Allows interactive creation of SQL queries for data extraction and transformation.
-//  Demonstrates advanced SQL knowledge and ability to create complex queries.
- 
-const SQLQueryBuilder = ({ tables }) => {
+/**
+ * SQL Query Builder Component
+ * Allows interactive creation of SQL queries for data extraction and transformation.
+ * SQL ability to create complex queries.
+ */
+const SQLQueryBuilder = ({ tables }: SQLQueryBuilderProps) => {
   const [selectedTable, setSelectedTable] = useState('');
-  const [selectedColumns, setSelectedColumns] = useState([]);
-  const [conditions, setConditions] = useState([]);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [conditions, setConditions] = useState<Array<{
+    column: string;
+    operator: string;
+    value: string;
+  }>>([]);
   const [joinTable, setJoinTable] = useState('');
   const [joinColumn, setJoinColumn] = useState('');
   const [joinTargetColumn, setJoinTargetColumn] = useState('');
@@ -36,7 +43,9 @@ const SQLQueryBuilder = ({ tables }) => {
     }
   };
   
-  // Function to generate the SQL query based on selections
+  /**
+   * Function to generate the SQL query based on selections
+   */
   const generateQuery = () => {
     if (!selectedTable || selectedColumns.length === 0) {
       setGeneratedSQL('');
@@ -55,7 +64,7 @@ const SQLQueryBuilder = ({ tables }) => {
     } else {
       query += selectedColumns.map(col => {
         // If joining, prefix with table name
-        if (joinTable && sampleTables[joinTable].columns.includes(col)) {
+        if (joinTable && sampleTables[joinTable]?.columns.includes(col)) {
           return `${joinTable}.${col}`;
         } else {
           return `${selectedTable}.${col}`;
@@ -91,7 +100,9 @@ const SQLQueryBuilder = ({ tables }) => {
     setGeneratedSQL(query);
   };
   
-  // Add a condition
+  /**
+   * Add a condition
+   */
   const addCondition = () => {
     setConditions([
       ...conditions, 
@@ -103,8 +114,10 @@ const SQLQueryBuilder = ({ tables }) => {
     ]);
   };
   
-  // Update a condition
-  const updateCondition = (index, field, value) => {
+  /**
+   * Update a condition
+   */
+  const updateCondition = (index: number, field: string, value: string) => {
     const newConditions = [...conditions];
     newConditions[index] = {
       ...newConditions[index],
@@ -113,8 +126,10 @@ const SQLQueryBuilder = ({ tables }) => {
     setConditions(newConditions);
   };
   
-  // Remove a condition
-  const removeCondition = (index) => {
+  /**
+   * Remove a condition
+   */
+  const removeCondition = (index: number) => {
     setConditions(conditions.filter((_, i) => i !== index));
   };
   
@@ -234,8 +249,8 @@ const SQLQueryBuilder = ({ tables }) => {
                       >
                         <option value="=">=</option>
                         <option value="<>">≠</option>
-                        <option value=">">></option>
-                        <option value="<"><</option>
+                        <option value=">"></option>
+                        <option value="<"></option>
                         <option value=">=">≥</option>
                         <option value="<=">≤</option>
                         <option value="LIKE">LIKE</option>
@@ -367,7 +382,7 @@ const SQLQueryBuilder = ({ tables }) => {
                     type="number"
                     min="0"
                     max="1000"
-                    value={limit}
+                    value={limit.toString()}
                     onChange={(e) => setLimit(parseInt(e.target.value) || 0)}
                     className="w-20"
                   />

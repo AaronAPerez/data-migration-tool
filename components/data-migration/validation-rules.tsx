@@ -1,16 +1,42 @@
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@radix-ui/react-tabs';
-import { FileCheck, FileWarning, CheckSquare, Table, Badge } from 'lucide-react';
-import { format } from 'path';
-import React, { useState } from 'react'
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { TableHeader, TableRow, TableHead, TableBody, TableCell } from '../ui/table';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { FileCheck, FileWarning, CheckSquare, AlertTriangle } from 'lucide-react';
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from '@/components/ui/accordion';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 
-// Data Validation Rules Builder 
-// Allows creation and testing of validation rules for data migration.
-// Demonstrates understanding of data integrity requirements.
- 
-const DataValidationRules = ({ data }) => {
+interface ValidationRulesProps {
+  data?: any[];
+}
+
+/**
+ * Data Validation Rules Builder 
+ * Allows creation and testing of validation rules for data migration.
+ * Demonstrates understanding of data integrity requirements.
+ */
+const ValidationRules = ({ data }: ValidationRulesProps) => {
   const [activeTab, setActiveTab] = useState('rules');
   const [rules, setRules] = useState([
     { id: 1, field: 'address', rule: 'required', message: 'Address is required', status: 'active' },
@@ -18,7 +44,7 @@ const DataValidationRules = ({ data }) => {
     { id: 3, field: 'latitude', rule: 'range', params: { min: -90, max: 90 }, message: 'Latitude must be between -90 and 90', status: 'active' },
     { id: 4, field: 'longitude', rule: 'range', params: { min: -180, max: 180 }, message: 'Longitude must be between -180 and 180', status: 'active' },
     { id: 5, field: 'status', rule: 'allowed_values', params: ['open', 'closed', 'in-progress'], message: 'Invalid status value', status: 'active' },
-    { id: 6, field: 'email', rule: 'regex', params: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}, message: 'Invalid email format', status: 'draft' }
+    { id: 6, field: 'email', rule: 'regex', params: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}', message: 'Invalid email format', status: 'draft' }
   ]);
   
   const [newRule, setNewRule] = useState({
@@ -29,7 +55,8 @@ const DataValidationRules = ({ data }) => {
     status: 'draft'
   });
   
-  const [testResults, setTestResults] = useState(null);
+  const [testResults, setTestResults] = useState<any>(null);
+  const [editMapping, setEditMapping] = useState<any>(null);
   
   const ruleTypes = [
     { value: 'required', label: 'Required Field' },
@@ -51,7 +78,9 @@ const DataValidationRules = ({ data }) => {
     { id: 5, address: '101 Tower Rd', city: 'Baltimore', incident_date: 'invalid', latitude: 39.2732, longitude: -76.6031, status: 'closed', email: 'test@fd' }
   ];
   
-  // Add a new rule
+  /**
+   * Add a new rule
+   */
   const addRule = () => {
     if (!newRule.field || !newRule.message) return;
     
@@ -75,32 +104,38 @@ const DataValidationRules = ({ data }) => {
     });
   };
   
-  // Update existing rule
-  const updateRule = (id, field, value) => {
+  /**
+   * Update existing rule
+   */
+  const updateRule = (id: number, field: string, value: string) => {
     setRules(rules.map(rule => 
       rule.id === id ? { ...rule, [field]: value } : rule
     ));
   };
   
-  // Delete rule
-  const deleteRule = (id) => {
+  /**
+   * Delete rule
+   */
+  const deleteRule = (id: number) => {
     setRules(rules.filter(rule => rule.id !== id));
   };
   
-  // Test rules against sample data
+  /**
+   * Test rules against sample data
+   */
   const testRules = () => {
     const results = {
       total: sampleData.length,
       passed: 0,
       failed: 0,
-      records: []
+      records: [] as any[]
     };
     
     // For each data record
     sampleData.forEach(record => {
       const recordResult = {
         id: record.id,
-        errors: [],
+        errors: [] as any[],
         passed: true
       };
       
@@ -122,7 +157,7 @@ const DataValidationRules = ({ data }) => {
             if (typeof value !== 'string') {
               valid = false;
             } else {
-              const params = typeof rule.params === 'object' ? rule.params : { min: 0, max: parseInt(rule.params) };
+              const params = typeof rule.params === 'object' ? rule.params : { min: 0, max: parseInt(rule.params as string) };
               valid = value.length >= (params.min || 0) && 
                      (params.max ? value.length <= params.max : true);
             }
@@ -132,7 +167,7 @@ const DataValidationRules = ({ data }) => {
             if (typeof value !== 'number') {
               valid = false;
             } else {
-              const params = typeof rule.params === 'object' ? rule.params : JSON.parse(rule.params);
+              const params = typeof rule.params === 'object' ? rule.params : JSON.parse(rule.params as string);
               valid = value >= (params.min !== undefined ? params.min : -Infinity) && 
                      value <= (params.max !== undefined ? params.max : Infinity);
             }
@@ -140,7 +175,7 @@ const DataValidationRules = ({ data }) => {
             
           case 'regex':
             try {
-              const regex = new RegExp(rule.params);
+              const regex = new RegExp(rule.params as string);
               valid = regex.test(String(value));
             } catch (e) {
               valid = false;
@@ -159,7 +194,7 @@ const DataValidationRules = ({ data }) => {
           case 'allowed_values':
             const allowedValues = Array.isArray(rule.params) ? 
                                  rule.params : 
-                                 rule.params.split(',').map(v => v.trim());
+                                 (rule.params as string).split(',').map(v => v.trim());
             valid = allowedValues.includes(String(value).toLowerCase());
             break;
             
@@ -211,7 +246,9 @@ const DataValidationRules = ({ data }) => {
     setActiveTab('test');
   };
   
-  // Export rules as JSON
+  /**
+   * Export rules as JSON
+   */
   const exportRules = () => {
     const rulesJson = JSON.stringify(rules, null, 2);
     const blob = new Blob([rulesJson], { type: 'application/json' });
@@ -225,6 +262,49 @@ const DataValidationRules = ({ data }) => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+  
+  /**
+   * Open edit dialog
+   */
+  const openEditDialog = (mapping: any) => {
+    setEditMapping({ ...mapping });
+  };
+  
+  /**
+   * Save edit mapping
+   */
+  const saveEditMapping = () => {
+    if (!editMapping) return;
+    
+    setRules(rules.map(rule => 
+      rule.id === editMapping.id ? editMapping : rule
+    ));
+    
+    setEditMapping(null);
+  };
+  
+  /**
+   * Get confidence badge color
+   */
+  const getConfidenceBadge = (confidence: string) => {
+    switch (confidence) {
+      case 'high':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">High</Badge>;
+      case 'medium':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Medium</Badge>;
+      case 'low':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Low</Badge>;
+      case 'manual':
+        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Manual</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+  
+  // Calculate mapping completeness
+  const requiredTargetFields = 0;
+  const mappedRequiredFields = 0;
+  const completeness = Math.round((mappedRequiredFields / (requiredTargetFields || 1)) * 100);
   
   return (
     <div className="space-y-4">
@@ -324,6 +404,7 @@ const DataValidationRules = ({ data }) => {
                             variant="ghost" 
                             size="icon"
                             onClick={() => deleteRule(rule.id)}
+                            aria-label="Delete rule"
                           >
                             ✕
                           </Button>
@@ -380,7 +461,7 @@ const DataValidationRules = ({ data }) => {
                   </span>
                 </label>
                 <Input
-                  value={newRule.params}
+                  value={typeof newRule.params === 'string' ? newRule.params : JSON.stringify(newRule.params)}
                   onChange={(e) => setNewRule({...newRule, params: e.target.value})}
                   placeholder={
                     newRule.rule === 'required' ? 'No parameters needed' :
@@ -450,7 +531,7 @@ const DataValidationRules = ({ data }) => {
                   <div>
                     <span className="text-sm text-muted-foreground">Parameters:</span>
                     <code className="ml-2 text-sm bg-muted p-1 rounded">
-                      {newRule.params}
+                      {typeof newRule.params === 'string' ? newRule.params : JSON.stringify(newRule.params)}
                     </code>
                   </div>
                 )}
@@ -486,7 +567,7 @@ function validate${newRule.field ? newRule.field.charAt(0).toUpperCase() + newRu
     : newRule.rule === 'regex'
     ? `if (!/${newRule.params || '.*'}/.test(value)) return "${newRule.message || 'Invalid format'}";`
     : newRule.rule === 'allowed_values'
-    ? `if (!['${(newRule.params || 'value1,value2').split(',').join("', '")}'].includes(value)) return "${newRule.message || 'Invalid value'}";`
+    ? `if (!['${(typeof newRule.params === 'string' ? newRule.params : '').split(',').join("', '")}'].includes(value)) return "${newRule.message || 'Invalid value'}";`
     : `// Add validation logic here`
   }
   return null; // No error
@@ -550,7 +631,7 @@ function validate${newRule.field ? newRule.field.charAt(0).toUpperCase() + newRu
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {testResults.records.map(record => (
+                    {testResults.records.map((record: any) => (
                       <TableRow key={record.id}>
                         <TableCell>{record.id}</TableCell>
                         <TableCell>
@@ -567,7 +648,7 @@ function validate${newRule.field ? newRule.field.charAt(0).toUpperCase() + newRu
                         <TableCell>
                           {record.errors.length > 0 ? (
                             <div className="space-y-1">
-                              {record.errors.map((error, i) => (
+                              {record.errors.map((error: any, i: number) => (
                                 <div key={i} className="text-sm">
                                   <span className="font-medium">{error.field}:</span> {error.message}
                                   <div className="text-xs text-muted-foreground">
@@ -591,8 +672,85 @@ function validate${newRule.field ? newRule.field.charAt(0).toUpperCase() + newRu
           )}
         </TabsContent>
       </Tabs>
+      
+      {/* Edit Mapping Dialog */}
+      {editMapping && (
+        <Dialog open={!!editMapping} onOpenChange={(open) => {
+          if (!open) setEditMapping(null);
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Field Mapping</DialogTitle>
+              <DialogDescription>
+                Configure how the source field maps to the target field
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Source Field</label>
+                  <select 
+                    value={editMapping.field}
+                    onChange={(e) => setEditMapping({...editMapping, field: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="">Select field</option>
+                    {Object.keys(sampleData[0] || {}).map(field => (
+                      <option key={field} value={field}>{field}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Rule Type</label>
+                  <select 
+                    value={editMapping.rule}
+                    onChange={(e) => setEditMapping({...editMapping, rule: e.target.value})}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    {ruleTypes.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Parameters</label>
+                <Input
+                  value={typeof editMapping.params === 'string' ? editMapping.params : JSON.stringify(editMapping.params)}
+                  onChange={(e) => setEditMapping({...editMapping, params: e.target.value})}
+                  placeholder="Rule parameters"
+                  disabled={editMapping.rule === 'required'}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Error Message</label>
+                <Input
+                  value={editMapping.message}
+                  onChange={(e) => setEditMapping({...editMapping, message: e.target.value})}
+                  placeholder="Error message"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditMapping(null)}>
+                Cancel
+              </Button>
+              <Button onClick={saveEditMapping}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
 
-export default ValidationRules
+export default ValidationRules;

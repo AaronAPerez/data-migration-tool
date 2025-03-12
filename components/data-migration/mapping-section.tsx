@@ -1,15 +1,69 @@
-import { Badge, ArrowRightLeft, Table, Settings, AlertTriangle } from 'lucide-react';
-import React, { useState } from 'react'
-import { Button } from '../ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
-import { Input } from '../ui/input';
-import { TableHeader, TableRow, TableHead, TableBody, TableCell } from '../ui/table';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { TableHeader, TableRow, TableHead, TableBody, TableCell, Table } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { 
+  ArrowRightLeft, 
+  AlertTriangle, 
+  Settings,
+  Plus,
+  X,
+  CheckCircle,
+  ArrowRight
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion';
+import { cn } from '@/lib/utils';
 
-//  Field Mapping Component
-//  Interactive interface for mapping source fields to target fields
-//  with transformation options
+interface FieldInfo {
+  name: string;
+  type: string;
+  sample?: any;
+  required?: boolean;
+  description?: string;
+}
 
-const FieldMapping = ({ sourceFields, targetFields }) => {
+interface MappingProps {
+  sourceFields?: FieldInfo[];
+  targetFields?: FieldInfo[];
+}
+
+interface MappingItem {
+  id: number;
+  sourceField: string;
+  targetField: string;
+  transform: string;
+  transformParams?: any;
+  confidence: string;
+}
+
+/**
+ * Field Mapping Component
+ * Interactive interface for mapping source fields to target fields
+ * with transformation options
+ */
+const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
   // Sample data for demonstration
   const sampleSourceFields = sourceFields || [
     { name: 'incident_id', type: 'varchar', sample: 'FD-2023-1001' },
@@ -36,7 +90,7 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
     { name: 'currentStatus', type: 'string', required: true, description: 'Current status' }
   ];
   
-  const [mappings, setMappings] = useState([
+  const [mappings, setMappings] = useState<MappingItem[]>([
     { id: 1, sourceField: 'incident_id', targetField: 'incidentId', transform: 'none', confidence: 'high' },
     { id: 2, sourceField: 'incident_date', targetField: 'incidentDateTime', transform: 'combine', transformParams: { sourceFields: ['incident_date', 'incident_time'], format: 'YYYY-MM-DD HH:mm:ss' }, confidence: 'medium' },
     { id: 3, sourceField: 'address', targetField: 'location', transform: 'object', transformParams: { properties: ['address', 'city', 'state', 'zip'] }, confidence: 'high' },
@@ -46,7 +100,7 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
     { id: 7, sourceField: 'status', targetField: 'currentStatus', transform: 'none', confidence: 'medium' }
   ]);
   
-  const [editMapping, setEditMapping] = useState(null);
+  const [editMapping, setEditMapping] = useState<MappingItem | null>(null);
   
   // Calculate mapping completeness
   const requiredTargetFields = sampleTargetFields.filter(f => f.required).length;
@@ -57,14 +111,18 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
   
   const completeness = Math.round((mappedRequiredFields / requiredTargetFields) * 100);
   
-  // Update mapping
-  const updateMapping = (id, field, value) => {
+  /**
+   * Update mapping
+   */
+  const updateMapping = (id: number, field: string, value: string) => {
     setMappings(mappings.map(mapping => 
       mapping.id === id ? { ...mapping, [field]: value } : mapping
     ));
   };
   
-  // Add new mapping
+  /**
+   * Add new mapping
+   */
   const addMapping = () => {
     const newId = Math.max(0, ...mappings.map(m => m.id)) + 1;
     setMappings([...mappings, { 
@@ -76,15 +134,23 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
     }]);
   };
   
-  // Remove mapping
-  const removeMapping = (id) => {
+  /**
+   * Remove mapping
+   */
+  const removeMapping = (id: number) => {
     setMappings(mappings.filter(m => m.id !== id));
   };
   
-  const openEditDialog = (mapping) => {
+  /**
+   * Open edit dialog
+   */
+  const openEditDialog = (mapping: MappingItem) => {
     setEditMapping({ ...mapping });
   };
   
+  /**
+   * Save edit mapping
+   */
   const saveEditMapping = () => {
     if (!editMapping) return;
     
@@ -95,37 +161,101 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
     setEditMapping(null);
   };
   
-  // Get confidence badge color
-  const getConfidenceBadge = (confidence) => {
+  /**
+   * Get confidence badge
+   */
+  const getConfidenceBadge = (confidence: string) => {
     switch (confidence) {
       case 'high':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">High</Badge>;
+        return (
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-100 flex items-center gap-1 px-2 py-1">
+            <CheckCircle className="h-3 w-3" />
+            High
+          </Badge>
+        );
       case 'medium':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Medium</Badge>;
+        return (
+          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 px-2 py-1">
+            Medium
+          </Badge>
+        );
       case 'low':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Low</Badge>;
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 px-2 py-1">
+            Low
+          </Badge>
+        );
       case 'manual':
-        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Manual</Badge>;
+        return (
+          <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 px-2 py-1">
+            Manual
+          </Badge>
+        );
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
   
-  // Get transform description
-  const getTransformDescription = (mapping) => {
+  /**
+   * Get transform description
+   */
+  const getTransformDescription = (mapping: MappingItem) => {
     switch (mapping.transform) {
       case 'none':
         return 'Direct copy';
       case 'combine':
-        return `Combine ${mapping.transformParams?.sourceFields?.join(' + ')}`;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">Combine</span>
+            <div className="space-x-1">
+              {mapping.transformParams?.sourceFields?.map((field: string, idx: number) => (
+                <React.Fragment key={field}>
+                  <Badge variant="outline" className="bg-gray-50">
+                    {field}
+                  </Badge>
+                  {idx < mapping.transformParams.sourceFields.length - 1 && "+"}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        );
       case 'object':
-        return `Create object from ${mapping.transformParams?.properties?.join(', ')}`;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">Object from</span>
+            <div className="flex flex-wrap gap-1">
+              {mapping.transformParams?.properties?.map((prop: string) => (
+                <Badge key={prop} variant="outline" className="bg-gray-50">
+                  {prop}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        );
       case 'geopoint':
-        return `Create geopoint from ${mapping.transformParams?.lat} + ${mapping.transformParams?.lng}`;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">GeoPoint</span>
+            <Badge variant="outline" className="bg-gray-50">
+              {mapping.transformParams?.lat}
+            </Badge>
+            <span>+</span>
+            <Badge variant="outline" className="bg-gray-50">
+              {mapping.transformParams?.lng}
+            </Badge>
+          </div>
+        );
       case 'split':
         return `Split by ${mapping.transformParams?.delimiter}`;
       case 'format':
-        return `Format: ${mapping.transformParams?.format}`;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">Format:</span>
+            <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">
+              {mapping.transformParams?.format}
+            </code>
+          </div>
+        );
       case 'lookup':
         return 'Value lookup/translation';
       default:
@@ -133,21 +263,41 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
     }
   };
   
+  /**
+   * Get field type badge
+   */
+  const getFieldTypeBadge = (type: string) => {
+    const bgColor = 
+      type === 'string' || type === 'varchar' ? 'bg-blue-50 text-blue-700' :
+      type === 'number' || type === 'decimal' ? 'bg-purple-50 text-purple-700' :
+      type === 'date' || type === 'datetime' ? 'bg-green-50 text-green-700' :
+      type === 'boolean' ? 'bg-yellow-50 text-yellow-700' :
+      type === 'object' ? 'bg-gray-50 text-gray-700' :
+      type === 'geopoint' ? 'bg-red-50 text-red-700' :
+      'bg-gray-50 text-gray-700';
+    
+    return (
+      <span className={`${bgColor} text-xs px-2 py-0.5 rounded-full font-medium`}>
+        {type}
+      </span>
+    );
+  };
+  
   return (
-    <Card>
-      <CardHeader>
+    <Card className="shadow-md">
+      <CardHeader className="border-b bg-muted/30">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-primary">
             <ArrowRightLeft className="w-5 h-5" />
             Field Mapping
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <div className="text-sm">
-              Completeness: <span className="font-medium">{completeness}%</span>
+          <div className="flex items-center gap-3">
+            <div className="text-sm font-medium">
+              Completeness: <span className="font-bold">{completeness}%</span>
             </div>
-            <div className="w-20 h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div className="w-24 h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
               <div 
-                className={`h-full ${
+                className={`h-full transition-all duration-500 ${
                   completeness >= 90 ? 'bg-green-500' : 
                   completeness >= 70 ? 'bg-blue-500' : 
                   completeness >= 50 ? 'bg-yellow-500' : 
@@ -159,59 +309,78 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
           </div>
         </div>
         <CardDescription>
-          Map fields from your source data to First Due's data structure
+          Map fields from your source data to target data structure
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-6">
+        <div className="space-y-6">
           <div className="flex justify-end">
-            <Button onClick={addMapping}>
+            <Button onClick={addMapping} className="flex items-center gap-1 shadow">
+              <Plus className="h-4 w-4" />
               Add Mapping
             </Button>
           </div>
           
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-hidden shadow-sm">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted/30">
                 <TableRow>
                   <TableHead className="w-[250px]">Source Field</TableHead>
+                  <TableHead className="w-[50px] text-center"></TableHead>
                   <TableHead className="w-[250px]">Target Field</TableHead>
                   <TableHead>Transformation</TableHead>
                   <TableHead className="w-[100px]">Confidence</TableHead>
-                  <TableHead className="w-[120px]">Actions</TableHead>
+                  <TableHead className="w-[80px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {mappings.map(mapping => (
-                  <TableRow key={mapping.id}>
-                    <TableCell>
+                  <TableRow key={mapping.id} className="hover:bg-muted/10 transition-colors">
+                    <TableCell className="border-r border-dashed border-muted">
                       <div className="font-medium">{mapping.sourceField}</div>
                       {sampleSourceFields.find(f => f.name === mapping.sourceField)?.sample && (
-                        <div className="text-xs text-gray-500 truncate">
-                          Sample: {sampleSourceFields.find(f => f.name === mapping.sourceField)?.sample}
+                        <div className="flex items-center mt-1 gap-2">
+                          <span className="text-xs text-muted-foreground">Sample:</span>
+                          <code className="text-xs bg-muted/30 px-2 py-0.5 rounded">
+                            {sampleSourceFields.find(f => f.name === mapping.sourceField)?.sample}
+                          </code>
+                        </div>
+                      )}
+                      {sampleSourceFields.find(f => f.name === mapping.sourceField)?.type && (
+                        <div className="mt-1">
+                          {getFieldTypeBadge(sampleSourceFields.find(f => f.name === mapping.sourceField)?.type || '')}
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
+                      <ArrowRight className="w-4 h-4 text-muted-foreground mx-auto" />
+                    </TableCell>
+                    <TableCell className="border-l border-dashed border-muted">
                       <div className="font-medium">{mapping.targetField}</div>
                       {sampleTargetFields.find(f => f.name === mapping.targetField)?.required && (
                         <div className="mt-1">
-                          <Badge variant="outline" className="text-xs">Required</Badge>
+                          <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">Required</Badge>
+                        </div>
+                      )}
+                      {sampleTargetFields.find(f => f.name === mapping.targetField)?.type && (
+                        <div className="mt-1">
+                          {getFieldTypeBadge(sampleTargetFields.find(f => f.name === mapping.targetField)?.type || '')}
                         </div>
                       )}
                     </TableCell>
                     <TableCell>
-                      <div>{getTransformDescription(mapping)}</div>
+                      <div className="text-sm">{getTransformDescription(mapping)}</div>
                     </TableCell>
                     <TableCell>
                       {getConfidenceBadge(mapping.confidence)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-end gap-1">
                         <Button 
                           variant="ghost" 
                           size="icon" 
                           onClick={() => openEditDialog(mapping)}
+                          className="hover:bg-blue-50 hover:text-blue-700 transition-colors"
                         >
                           <Settings className="w-4 h-4" />
                         </Button>
@@ -219,8 +388,9 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                           variant="ghost" 
                           size="icon"
                           onClick={() => removeMapping(mapping.id)}
+                          className="hover:bg-red-50 hover:text-red-700 transition-colors"
                         >
-                          ✕
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -229,8 +399,20 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                 
                 {mappings.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4 text-gray-500">
-                      No field mappings defined. Click "Add Mapping" to create one.
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2">
+                        <ArrowRightLeft className="h-8 w-8 opacity-30" />
+                        <p>No field mappings defined</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={addMapping}
+                          className="mt-2"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Create First Mapping
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}
@@ -238,29 +420,46 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
             </Table>
           </div>
           
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="unmapped">
-                <AccordionTrigger>
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                    <span>Unmapped Required Target Fields</span>
+          <div className="p-4 bg-blue-50 rounded-lg shadow-sm border border-blue-100">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="unmapped" className="border-none">
+                <AccordionTrigger className="py-2 hover:no-underline">
+                  <div className="flex items-center gap-2 text-blue-800">
+                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                    <span className="font-medium">Unmapped Required Target Fields</span>
+                    
+                    {/* Badge showing count of unmapped fields */}
+                    {sampleTargetFields
+                      .filter(f => f.required)
+                      .filter(f => !mappings.some(m => m.targetField === f.name))
+                      .length > 0 && (
+                        <Badge className="ml-2 bg-amber-100 text-amber-800 hover:bg-amber-100">
+                          {sampleTargetFields
+                            .filter(f => f.required)
+                            .filter(f => !mappings.some(m => m.targetField === f.name))
+                            .length}
+                        </Badge>
+                      )}
                   </div>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-2 mt-2">
+                <AccordionContent className="pt-2">
+                  <div className="space-y-2">
                     {sampleTargetFields
                       .filter(f => f.required)
                       .filter(f => !mappings.some(m => m.targetField === f.name))
                       .map(field => (
-                        <div key={field.name} className="flex justify-between p-2 bg-white rounded border">
+                        <div key={field.name} className="flex justify-between items-center p-3 bg-white rounded border shadow-sm hover:border-blue-300 transition-colors">
                           <div>
-                            <div className="font-medium">{field.name}</div>
-                            <div className="text-sm text-gray-500">{field.description}</div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{field.name}</span>
+                              {getFieldTypeBadge(field.type)}
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1">{field.description}</div>
                           </div>
                           <Button 
                             variant="outline" 
                             size="sm"
+                            className="border-blue-200 hover:border-blue-400 hover:bg-blue-50"
                             onClick={() => {
                               const newId = Math.max(0, ...mappings.map(m => m.id)) + 1;
                               setMappings([...mappings, { 
@@ -270,8 +469,14 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                                 transform: 'none', 
                                 confidence: 'manual' 
                               }]);
+                              
+                              // Open edit dialog right away for better UX
+                              setTimeout(() => {
+                                openEditDialog(mappings[mappings.length - 1]);
+                              }, 100);
                             }}
                           >
+                            <ArrowRightLeft className="w-3 h-3 mr-1" />
                             Map Field
                           </Button>
                         </div>
@@ -281,8 +486,9 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                       .filter(f => f.required)
                       .filter(f => !mappings.some(m => m.targetField === f.name))
                       .length === 0 && (
-                        <div className="text-green-600 font-medium">
-                          All required target fields have been mapped!
+                        <div className="flex items-center gap-2 p-3 bg-green-50 text-green-800 rounded-md border border-green-100">
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <span className="font-medium">All required target fields have been mapped!</span>
                         </div>
                       )}
                   </div>
@@ -297,62 +503,87 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
           <Dialog open={!!editMapping} onOpenChange={(open) => {
             if (!open) setEditMapping(null);
           }}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-xl">
               <DialogHeader>
-                <DialogTitle>Edit Field Mapping</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <ArrowRightLeft className="h-5 w-5 text-primary" />
+                  Edit Field Mapping
+                </DialogTitle>
                 <DialogDescription>
                   Configure how the source field maps to the target field
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-5 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Source Field</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Source Field</label>
                     <Select 
                       value={editMapping.sourceField}
                       onValueChange={(value) => setEditMapping({...editMapping, sourceField: value})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full border-gray-300 focus:border-blue-300">
                         <SelectValue placeholder="Select source field" />
                       </SelectTrigger>
                       <SelectContent>
                         {sampleSourceFields.map(field => (
                           <SelectItem key={field.name} value={field.name}>
-                            {field.name} ({field.type})
+                            <span className="flex items-center gap-2">
+                              {field.name}
+                              <span className="text-xs text-gray-500">({field.type})</span>
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    
+                    {/* Show sample if available */}
+                    {editMapping.sourceField && sampleSourceFields.find(f => f.name === editMapping.sourceField)?.sample && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700 font-mono">
+                        Sample: {sampleSourceFields.find(f => f.name === editMapping.sourceField)?.sample}
+                      </div>
+                    )}
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium mb-1">Target Field</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Target Field</label>
                     <Select 
                       value={editMapping.targetField}
                       onValueChange={(value) => setEditMapping({...editMapping, targetField: value})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full border-gray-300 focus:border-blue-300">
                         <SelectValue placeholder="Select target field" />
                       </SelectTrigger>
                       <SelectContent>
                         {sampleTargetFields.map(field => (
-                          <SelectItem key={field.name} value={field.name}>
-                            {field.name} {field.required ? '(Required)' : ''}
+                          <SelectItem key={field.name} value={field.name} className="flex items-center gap-2">
+                            <span className="flex items-center gap-2">
+                              {field.name}
+                              {field.required && (
+                                <Badge variant="outline" className="ml-1 bg-red-50 text-red-700 text-xs">Required</Badge>
+                              )}
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    
+                    {/* Show description if available */}
+                    {editMapping.targetField && sampleTargetFields.find(f => f.name === editMapping.targetField)?.description && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700">
+                        {sampleTargetFields.find(f => f.name === editMapping.targetField)?.description}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Transformation</label>
+                <div className="pt-2 border-t">
+                  <label className="block text-sm font-medium mb-2 text-gray-700">Transformation</label>
                   <Select 
                     value={editMapping.transform}
                     onValueChange={(value) => setEditMapping({...editMapping, transform: value})}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full border-gray-300 focus:border-blue-300">
                       <SelectValue placeholder="Select transformation" />
                     </SelectTrigger>
                     <SelectContent>
@@ -368,11 +599,11 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                 </div>
                 
                 {editMapping.transform === 'combine' && (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium">Fields to Combine</label>
-                    <div className="p-2 border rounded bg-gray-50">
+                  <div className="space-y-3 bg-gray-50 p-3 rounded-md border">
+                    <label className="block text-sm font-medium text-gray-700">Fields to Combine</label>
+                    <div className="grid grid-cols-2 gap-2">
                       {sampleSourceFields.map(field => (
-                        <div key={field.name} className="flex items-center my-1">
+                        <div key={field.name} className="flex items-center p-2 bg-white rounded border">
                           <input 
                             type="checkbox" 
                             id={`combine-${field.name}`}
@@ -381,7 +612,7 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                               const currentFields = editMapping.transformParams?.sourceFields || [];
                               const updatedFields = e.target.checked
                                 ? [...currentFields, field.name]
-                                : currentFields.filter(f => f !== field.name);
+                                : currentFields.filter((f: string) => f !== field.name);
                               
                               setEditMapping({
                                 ...editMapping,
@@ -391,15 +622,15 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                                 }
                               });
                             }}
-                            className="mr-2"
+                            className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                           />
-                          <label htmlFor={`combine-${field.name}`}>{field.name}</label>
+                          <label htmlFor={`combine-${field.name}`} className="text-sm">{field.name}</label>
                         </div>
                       ))}
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium mb-1">Format</label>
+                      <label className="block text-sm font-medium mb-1 text-gray-700">Format</label>
                       <Input
                         value={editMapping.transformParams?.format || ''}
                         onChange={(e) => setEditMapping({
@@ -410,6 +641,7 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                           }
                         })}
                         placeholder="e.g., YYYY-MM-DD HH:mm:ss"
+                        className="border-gray-300 focus:border-blue-300 font-mono"
                       />
                       <div className="text-xs text-gray-500 mt-1">
                         For dates: YYYY (year), MM (month), DD (day), HH (hour), mm (minute), ss (second)
@@ -419,65 +651,49 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                 )}
                 
                 {editMapping.transform === 'geopoint' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Latitude Field</label>
-                      <Select 
-                        value={editMapping.transformParams?.lat || ''}
-                        onValueChange={(value) => setEditMapping({
-                          ...editMapping,
-                          transformParams: {
-                            ...editMapping.transformParams,
-                            lat: value
-                          }
-                        })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select latitude field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sampleSourceFields.map(field => (
-                            <SelectItem key={field.name} value={field.name}>
-                              {field.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <div className="space-y-3 bg-gray-50 p-3 rounded-md border">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1 text-gray-700">Latitude Field</label>
+                        <Select 
+                          value={editMapping.transformParams?.lat || ''}
+                          onValueChange={(value) => setEditMapping({
+                            ...editMapping,
+                            transformParams: {
+                              ...editMapping.transformParams,
+                              lat: value
+                            }
+                          })}
+                        >
+                          <SelectTrigger className="w-full border-gray-300 bg-white">
+                            <SelectValue placeholder="Select longitude field" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sampleSourceFields.map(field => (
+                              <SelectItem key={field.name} value={field.name}>
+                                {field.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Longitude Field</label>
-                      <Select 
-                        value={editMapping.transformParams?.lng || ''}
-                        onValueChange={(value) => setEditMapping({
-                          ...editMapping,
-                          transformParams: {
-                            ...editMapping.transformParams,
-                            lng: value
-                          }
-                        })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select longitude field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sampleSourceFields.map(field => (
-                            <SelectItem key={field.name} value={field.name}>
-                              {field.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-100 text-sm">
+                      <div className="flex items-center gap-2 text-blue-800">
+                        <div className="flex-shrink-0">ℹ️</div>
+                        <span>Geographic point data will be created using the selected latitude and longitude fields.</span>
+                      </div>
                     </div>
                   </div>
                 )}
                 
                 {editMapping.transform === 'object' && (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium">Object Properties</label>
-                    <div className="p-2 border rounded bg-gray-50">
+                  <div className="space-y-3 bg-gray-50 p-3 rounded-md border">
+                    <label className="block text-sm font-medium text-gray-700">Object Properties</label>
+                    <div className="max-h-48 overflow-y-auto grid grid-cols-2 gap-2">
                       {sampleSourceFields.map(field => (
-                        <div key={field.name} className="flex items-center my-1">
+                        <div key={field.name} className="flex items-center p-2 bg-white rounded border">
                           <input 
                             type="checkbox" 
                             id={`property-${field.name}`}
@@ -486,7 +702,7 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                               const currentProps = editMapping.transformParams?.properties || [];
                               const updatedProps = e.target.checked
                                 ? [...currentProps, field.name]
-                                : currentProps.filter(p => p !== field.name);
+                                : currentProps.filter((p: string) => p !== field.name);
                               
                               setEditMapping({
                                 ...editMapping,
@@ -496,31 +712,38 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                                 }
                               });
                             }}
-                            className="mr-2"
+                            className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
                           />
-                          <label htmlFor={`property-${field.name}`}>{field.name}</label>
+                          <label htmlFor={`property-${field.name}`} className="text-sm">{field.name}</label>
                         </div>
                       ))}
+                    </div>
+                    
+                    <div className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-100 text-sm">
+                      <div className="flex items-center gap-2 text-blue-800">
+                        <div className="flex-shrink-0">ℹ️</div>
+                        <span>Selected fields will be combined into a single object with the field names as keys.</span>
+                      </div>
                     </div>
                   </div>
                 )}
                 
                 {editMapping.transform === 'lookup' && (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium">Value Mappings</label>
-                    <div className="border rounded overflow-hidden">
+                  <div className="space-y-3 bg-gray-50 p-3 rounded-md border">
+                    <label className="block text-sm font-medium text-gray-700">Value Mappings</label>
+                    <div className="border rounded-md overflow-hidden bg-white">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Source Value</TableHead>
-                            <TableHead>Target Value</TableHead>
-                            <TableHead className="w-[80px]"></TableHead>
+                            <TableHead className="bg-muted/20">Source Value</TableHead>
+                            <TableHead className="bg-muted/20">Target Value</TableHead>
+                            <TableHead className="w-[60px] bg-muted/20"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {(editMapping.transformParams?.valueMappings || []).map((mapping, index) => (
-                            <TableRow key={index}>
-                              <TableCell>
+                          {(editMapping.transformParams?.valueMappings || []).map((mapping: any, index: number) => (
+                            <TableRow key={index} className="hover:bg-gray-50">
+                              <TableCell className="p-2">
                                 <Input
                                   value={mapping.source}
                                   onChange={(e) => {
@@ -535,9 +758,11 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                                       }
                                     });
                                   }}
+                                  className="border-gray-300 text-sm"
+                                  placeholder="Source value"
                                 />
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="p-2">
                                 <Input
                                   value={mapping.target}
                                   onChange={(e) => {
@@ -552,12 +777,15 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                                       }
                                     });
                                   }}
+                                  className="border-gray-300 text-sm"
+                                  placeholder="Target value"
                                 />
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="p-2">
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                                   onClick={() => {
                                     const updatedMappings = [...(editMapping.transformParams?.valueMappings || [])];
                                     updatedMappings.splice(index, 1);
@@ -571,17 +799,26 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                                     });
                                   }}
                                 >
-                                  ✕
+                                  <X className="h-4 w-4" />
                                 </Button>
                               </TableCell>
                             </TableRow>
                           ))}
+                          
+                          {(!editMapping.transformParams?.valueMappings || editMapping.transformParams.valueMappings.length === 0) && (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-3 text-gray-500">
+                                No value mappings defined
+                              </TableCell>
+                            </TableRow>
+                          )}
                         </TableBody>
                       </Table>
                     </div>
                     
                     <Button
                       variant="outline"
+                      className="w-full mt-2 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
                       onClick={() => {
                         const currentMappings = editMapping.transformParams?.valueMappings || [];
                         
@@ -594,17 +831,47 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
                         });
                       }}
                     >
+                      <Plus className="h-3 w-3 mr-1" />
                       Add Value Mapping
                     </Button>
+                    
+                    <div className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-100 text-sm">
+                      <div className="flex items-center gap-2 text-blue-800">
+                        <div className="flex-shrink-0">ℹ️</div>
+                        <span>Values from the source field will be translated to the corresponding target values.</span>
+                      </div>
+                    </div>
                   </div>
                 )}
+                
+                <div className="pt-3 border-t flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">Mapping Confidence</label>
+                  <Select 
+                    value={editMapping.confidence}
+                    onValueChange={(value) => setEditMapping({...editMapping, confidence: value})}
+                  >
+                    <SelectTrigger className="w-32 border-gray-300">
+                      <SelectValue placeholder="Confidence" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="manual">Manual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setEditMapping(null)}>
+              <DialogFooter className="border-t pt-4">
+                <Button variant="outline" onClick={() => setEditMapping(null)} className="hover:bg-gray-50">
                   Cancel
                 </Button>
-                <Button onClick={saveEditMapping}>
+                <Button 
+                  onClick={saveEditMapping} 
+                  disabled={!editMapping.sourceField || !editMapping.targetField}
+                  className="bg-primary hover:bg-primary/90 shadow-sm"
+                >
                   Save Mapping
                 </Button>
               </DialogFooter>
@@ -616,5 +883,4 @@ const FieldMapping = ({ sourceFields, targetFields }) => {
   );
 };
 
-
-export default MappingSection
+export default MappingSection;   

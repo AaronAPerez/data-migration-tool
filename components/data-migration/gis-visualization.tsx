@@ -1,45 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { 
-  Map, 
-  Database, 
-  Code, 
-  Layers, 
-  LineChart, 
-  GitBranch, 
-  Workflow,
-  FileWarning,
-  Settings2,
-  AlertTriangle,
-  FileCheck,
-  CheckSquare,
-  BarChart3,
-  PanelRight
-} from 'lucide-react';
 import * as d3 from 'd3';
 
-// Advanced GIS Visualization Component
-//   This component helps visualize and validate geographic data during migration.
-//  It supports coordinate validation, projection transformation, and clustering analysis
 
-const GISVisualization = ({ data }) => {
+interface GISPoint {
+  id: string | number;
+  lat: number;
+  lon: number;
+  name: string;
+  type: string;
+}
+
+interface GISVisualizationProps {
+  data: GISPoint[];
+}
+
+/**
+ * GIS Visualization Component
+ * 
+ * Visualizes geographic data during migration with various view modes
+ * and interactive features.
+ */
+const GISVisualization = ({ data }: GISVisualizationProps) => {
   const [mapMode, setMapMode] = useState('points');
-  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [selectedPoint, setSelectedPoint] = useState<GISPoint | null>(null);
   const [coordSystem, setCoordSystem] = useState('wgs84');
   const [clusterRadius, setClusterRadius] = useState(50);
   const [showBounds, setShowBounds] = useState(true);
   const [showLabels, setShowLabels] = useState(false);
-  const svgRef = useRef(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   
-  // Sample GIS data for demonstration
-  const sampleData = data || [
+  // Sample GIS data for demonstration if none provided
+  const gisData = data && data.length > 0 ? data : [
     { id: 1, lat: 39.2904, lon: -76.6122, name: "Station 1", type: "Fire Station" },
     { id: 2, lat: 39.2809, lon: -76.5883, name: "Station 2", type: "Fire Station" },
     { id: 3, lat: 39.3142, lon: -76.6150, name: "Station 3", type: "EMS" },
@@ -53,13 +49,15 @@ const GISVisualization = ({ data }) => {
   ];
   
   // Calculate bounding box
-  const minLat = Math.min(...sampleData.map(d => d.lat)) - 0.01;
-  const maxLat = Math.max(...sampleData.map(d => d.lat)) + 0.01;
-  const minLon = Math.min(...sampleData.map(d => d.lon)) - 0.01;
-  const maxLon = Math.max(...sampleData.map(d => d.lon)) + 0.01;
+  const minLat = Math.min(...gisData.map(d => d.lat)) - 0.01;
+  const maxLat = Math.max(...gisData.map(d => d.lat)) + 0.01;
+  const minLon = Math.min(...gisData.map(d => d.lon)) - 0.01;
+  const maxLon = Math.max(...gisData.map(d => d.lon)) + 0.01;
   
-  // Projection function (simplified)
-  const project = (lat, lon) => {
+  /**
+   * Projects geographical coordinates to SVG coordinates
+   */
+  const project = (lat: number, lon: number) => {
     const width = 600;
     const height = 400;
     
@@ -70,24 +68,30 @@ const GISVisualization = ({ data }) => {
     return [x, y];
   };
   
-  // Create clusters
+  /**
+   * Create clusters from points
+   */
   const createClusters = () => {
     // Simple clustering for demo purposes
-    const clusters = [];
-    const assigned = new Set();
+    const clusters: Array<{
+      points: number[];
+      center: [number, number];
+      size: number;
+    }> = [];
+    const assigned = new Set<number>();
     
-    sampleData.forEach((point, i) => {
+    gisData.forEach((point, i) => {
       if (assigned.has(i)) return;
       
       const cluster = [i];
       assigned.add(i);
       
       // Find nearby points
-      for (let j = 0; j < sampleData.length; j++) {
+      for (let j = 0; j < gisData.length; j++) {
         if (i === j || assigned.has(j)) continue;
         
-        const [x1, y1] = project(sampleData[i].lat, sampleData[i].lon);
-        const [x2, y2] = project(sampleData[j].lat, sampleData[j].lon);
+        const [x1, y1] = project(gisData[i].lat, gisData[i].lon);
+        const [x2, y2] = project(gisData[j].lat, gisData[j].lon);
         
         // Calculate distance
         const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -100,7 +104,7 @@ const GISVisualization = ({ data }) => {
       
       if (cluster.length > 1) {
         // Calculate center
-        const clusterPoints = cluster.map(idx => sampleData[idx]);
+        const clusterPoints = cluster.map(idx => gisData[idx]);
         const centerLat = clusterPoints.reduce((sum, p) => sum + p.lat, 0) / clusterPoints.length;
         const centerLon = clusterPoints.reduce((sum, p) => sum + p.lon, 0) / clusterPoints.length;
         
@@ -115,6 +119,9 @@ const GISVisualization = ({ data }) => {
     return clusters;
   };
   
+  /**
+   * Render the map visualization using D3
+   */
   useEffect(() => {
     if (!svgRef.current) return;
     
@@ -188,7 +195,7 @@ const GISVisualization = ({ data }) => {
         
         // Draw points in cluster
         cluster.points.forEach(idx => {
-          const point = sampleData[idx];
+          const point = gisData[idx];
           const [px, py] = project(point.lat, point.lon);
           
           svg.append('circle')
@@ -214,7 +221,7 @@ const GISVisualization = ({ data }) => {
       });
       
       // Draw standalone points
-      sampleData.forEach((point, i) => {
+      gisData.forEach((point, i) => {
         if (clusters.some(c => c.points.includes(i))) return;
         
         const [px, py] = project(point.lat, point.lon);
@@ -231,7 +238,7 @@ const GISVisualization = ({ data }) => {
       });
     } else {
       // Draw individual points
-      sampleData.forEach(point => {
+      gisData.forEach(point => {
         const [x, y] = project(point.lat, point.lon);
         
         svg.append('circle')
@@ -259,10 +266,10 @@ const GISVisualization = ({ data }) => {
     // Draw connections if heatmap mode
     if (mapMode === 'heatmap') {
       // Draw connections between close points
-      for (let i = 0; i < sampleData.length; i++) {
-        for (let j = i + 1; j < sampleData.length; j++) {
-          const [x1, y1] = project(sampleData[i].lat, sampleData[i].lon);
-          const [x2, y2] = project(sampleData[j].lat, sampleData[j].lon);
+      for (let i = 0; i < gisData.length; i++) {
+        for (let j = i + 1; j < gisData.length; j++) {
+          const [x1, y1] = project(gisData[i].lat, gisData[i].lon);
+          const [x2, y2] = project(gisData[j].lat, gisData[j].lon);
           
           // Calculate distance
           const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -284,10 +291,12 @@ const GISVisualization = ({ data }) => {
       }
     }
     
-  }, [sampleData, mapMode, clusterRadius, showBounds, showLabels]);
+  }, [gisData, mapMode, clusterRadius, showBounds, showLabels]);
   
-  // Get color by point type
-  const getColorByType = (type) => {
+  /**
+   * Get color by point type
+   */
+  const getColorByType = (type: string) => {
     switch (type) {
       case 'Fire Station': return '#dc3545';
       case 'EMS': return '#28a745';
@@ -330,7 +339,7 @@ const GISVisualization = ({ data }) => {
           <div className="flex items-center gap-2">
             <Switch 
               checked={showLabels} 
-              onCheckedChange={setShowLabels} 
+              onCheckedChange={setShowLabels}
               id="show-labels"
             />
             <label htmlFor="show-labels" className="text-sm">Labels</label>
@@ -338,7 +347,7 @@ const GISVisualization = ({ data }) => {
           <div className="flex items-center gap-2">
             <Switch 
               checked={showBounds} 
-              onCheckedChange={setShowBounds} 
+              onCheckedChange={setShowBounds}
               id="show-bounds"
             />
             <label htmlFor="show-bounds" className="text-sm">Bounds</label>
@@ -394,12 +403,11 @@ const GISVisualization = ({ data }) => {
           Coordinate System: <Badge variant="outline">{coordSystem}</Badge>
         </div>
         <div>
-          Points: {sampleData.length}
+          Points: {gisData.length}
         </div>
       </div>
     </div>
   );
 };
-
 
 export default GISVisualization;

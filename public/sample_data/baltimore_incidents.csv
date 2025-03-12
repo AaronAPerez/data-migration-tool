@@ -1,0 +1,31 @@
+incident_id,incident_date,incident_time,address,city,state,zip,incident_type,priority,response_time,latitude,longitude,unit_id,personnel_count,equipment_used,status,reported_by,notes
+FD-2023-1001,5/12/2023,14:32:45,123 Main St,Baltimore,MD,21201,Structure Fire,High,4.2,39.2904,-76.6122,E07,5,"Engine, Ladder",Closed,911 Call,Smoke visible from 2nd floor windows
+FD-2023-1002,5/12/2023,17:45:10,456 Park Ave,Baltimore,MD,21202,Medical Emergency,Medium,3.5,39.2887,-76.617,M12,2,Medical Kit,Closed,Mobile App,Patient with chest pain transferred to hospital
+FD-2023-1003,5/13/2023,8:12:30,789 Harbor Dr,Baltimore,MD,21230,Gas Leak,High,5.1,39.2712,-76.6045,E15,4,"Engine, HazMat",Closed,911 Call,Gas leak from kitchen stove
+FD-2023-1004,5/13/2023,10:25:18,101 Tower Rd,Baltimore,MD,21222,Vehicle Accident,High,2.8,39.2405,-76.5749,E10,3,"Engine, Rescue",Closed,911 Call,Two-vehicle collision with minor injuries
+FD-2023-1005,5/14/2023,13:40:22,222 University Blvd,Baltimore,MD,21218,Medical Emergency,Low,6.3,39.3262,-76.6205,M08,2,Medical Kit,Closed,Mobile App,Elderly patient with fall injury
+FD-2023-1006,5/14/2023,21:55:43,333 Market St,Baltimore,MD,21202,Structure Fire,High,3.9,39.2866,-76.6093,E04,6,"Engine, Ladder, Tanker",Closed,911 Call,Kitchen fire contained to stove area
+FD-2023-1007,5/15/2023,3:15:55,444 Bayside Dr,Baltimore,MD,21224,Carbon Monoxide,High,4.5,39.2783,-76.565,E13,3,"Engine, HazMat",Closed,911 Call,CO detector activation in residential home
+FD-2023-1008,5/15/2023,9:22:17,555 Hilltop Rd,Baltimore,MD,21239,Medical Emergency,Medium,5.7,39.3649,-76.583,M05,2,Medical Kit,Closed,Mobile App,Diabetic emergency resolved on scene
+FD-2023-1009,5/15/2023,14:05:31,666 Industrial Pkwy,Baltimore,MD,21226,HazMat Incident,High,7.2,39.2207,-76.578,E22,8,"Engine, HazMat, Command",Closed,Phone Call,Chemical spill at manufacturing facility
+FD-2023-1010,5/16/2023,11:33:42,777 Greenway Ave,Baltimore,MD,21218,Structural Collapse,High,3.4,39.3183,-76.6205,E09,7,"Engine, Rescue, K9 Unit",Closed,911 Call,Partial roof collapse at abandoned warehouse
+FD-2023-1011,5/16/2023,16:50:19,888 Riverside Dr,Baltimore,MD,21230,Water Rescue,High,6.1,39.269,-76.6004,M17,5,"Boat, Dive Team",Closed,911 Call,Person reported in harbor water
+FD-2023-1012,5/17/2023,8:10:05,999 Eastside Ave,Baltimore,MD,21224,Medical Emergency,Medium,4.3,39.2864,-76.5476,M11,2,Medical Kit,Closed,Mobile App,Anaphylactic reaction treated with epinephrine
+FD-2023-1013,5/17/2023,13:27:39,1010 Commerce St,Baltimore,MD,21202,Elevator Rescue,Medium,3.8,39.2873,-76.6118,E06,4,Rescue Equipment,Closed,Phone Call,Three people stuck in office building elevator
+FD-2023-1014,5/18/2023,2:45:11,1111 Transit Way,Baltimore,MD,21211,Vehicle Fire,Medium,4.7,39.3301,-76.6352,E18,4,Engine,Closed,911 Call,Car fire in parking garage - no injuries
+FD-2023-1015,5/18/2023,10:17:23,1212 School Ln,Baltimore,MD,21212,Fire Alarm,Low,2.9,39.3701,-76.6099,E02,3,Engine,Closed,Automatic Alarm,False alarm at elementary school
+FD-2023-1016,5/19/2023,12:30:56,1313 Hospital Rd,Baltimore,MD,21229,Medical Emergency,High,2.4,39.2923,-76.6947,M03,3,"Medical Kit, ALS Equipment",Closed,Phone Call,Stroke patient transported to emergency room
+FD-2023-1017,5/19/2023,17:22:08,1414 Stadium Blvd,Baltimore,MD,21230,Public Service,Low,8.2,39.2768,-76.6227,E14,2,Basic Equipment,Closed,Phone Call,Animal rescue from storm drain
+FD-2023-1018,5/20/2023,7:55:29,1515 Marina Way,Baltimore,MD,21224,Boat Fire,High,5.6,39.2612,-76.5781,E21,6,"Engine, Boat, Foam Unit",Closed,911 Call,Small pleasure craft fire at marina
+FD-2023-1019,5/20/2023,14:43:17,1616 Metro Dr,Baltimore,MD,21215,Medical Emergency,Medium,3.9,39.34,-76.6823,M09,2,Medical Kit,Closed,Mobile App,Unconscious person regained consciousness
+FD-2023-1020,5/20/2023,23:10:44,1717 Nightclub Ave,Baltimore,MD,21202,Structure Fire,High,3.1,39.2912,-76.6093,E01,8,"Engine, Ladder, Rescue",Closed,911 Call,Fire in commercial kitchen hood system
+FD-2023-1021,5/21/2023,9:35:27,1818 Shopping Ctr,Baltimore,MD,21236,Medical Emergency,Low,5.8,39.3865,-76.4631,M14,2,Medical Kit,Closed,Phone Call,Minor injury from slip and fall
+FD-2023-1022,5/21/2023,15:20:33,1919 Office Park,Baltimore,MD,21227,Electrical Fire,Medium,4.2,39.2397,-76.6711,E05,4,"Engine, Ladder",Closed,911 Call,Electrical panel smoking in office building
+FD-2023-1023,5/22/2023,6:47:59,2020 Senior Living,Baltimore,MD,21209,Medical Emergency,High,3.7,39.3731,-76.6846,M07,3,"Medical Kit, Stair Chair",Closed,Automatic Alarm,Resident with difficulty breathing
+FD-2023-1024,5/22/2023,11:58:02,2121 Construction Site,Baltimore,MD,21231,Traumatic Injury,High,2.6,39.2845,-76.5924,E11,5,"Engine, Heavy Rescue",Closed,911 Call,Worker fallen from height
+FD-2023-1025,5/22/2023,18:33:45,2222 Highway 40,Baltimore,MD,21223,Vehicle Accident,High,3.4,39.2937,-76.6514,E03,6,"Engine, Rescue, Extrication",In Progress,911 Call,Multi-vehicle collision with entrapment
+FD-2023-1026,5/23/2023,7:15:38,2323 Train Station,Baltimore,MD,21201,Medical Emergency,Medium,4.1,39.3072,-76.6169,M15,2,Medical Kit,In Progress,Phone Call,Person experiencing seizure
+FD-2023-1027,5/23/2023,12:30:22,2424 Retail Dr,Baltimore,MD,21244,Smoke Detector,Low,6.3,39.3165,-76.7473,E19,3,Engine,In Progress,Automatic Alarm,Investigation of smoke detector activation
+FD-2023-1028,5/23/2023,16:48:51,2525 Parkside Ln,Baltimore,MD,21217,Brush Fire,Medium,7.1,39.3106,-76.639,E08,4,"Engine, Brush Truck",In Progress,911 Call,Brush fire approximately 1/4 acre
+FD-2023-1029,5/24/2023,9:22:17,2626 Warehouse Row,Baltimore,MD,21230,Structure Fire,High,3.9,39.263,-76.6252,E12,7,"Engine, Ladder, Tanker",In Progress,911 Call,Visible smoke from loading dock area
+FD-2023-1030,5/24/2023,13:05:33,2727 Airport Blvd,Baltimore,MD,21240,Medical Emergency,Medium,5.2,39.1925,-76.6719,M06,2,Medical Kit,In Progress,Mobile App,Passenger with severe allergic reaction
