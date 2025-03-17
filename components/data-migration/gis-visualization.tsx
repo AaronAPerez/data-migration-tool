@@ -4,11 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Map, 
-  ArrowRight,
-  CheckCircle,
-} from 'lucide-react';
 import * as d3 from 'd3';
 
 /**
@@ -36,7 +31,7 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
   // Component state
   const [mapMode, setMapMode] = useState<'points' | 'clusters' | 'heatmap'>('points');
   const [selectedPoint, setSelectedPoint] = useState<GISPoint | null>(null);
-  const [coordSystem, setCoordSystem] = useState('wgs84');
+  const [coordSystem] = useState('wgs84');
   const [clusterRadius, setClusterRadius] = useState(50);
   const [showBounds, setShowBounds] = useState(true);
   const [showLabels, setShowLabels] = useState(false);
@@ -334,7 +329,7 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
       });
     }
     
-  }, [validData, mapMode, clusterRadius, showBounds, showLabels, minLat, minLon, maxLat, maxLon]);
+  }, [validData, mapMode, clusterRadius, showBounds, showLabels, minLat, minLon, maxLat, maxLon, createClusters, project, getColorByType]);
   
   return (
     <div className="space-y-4">
