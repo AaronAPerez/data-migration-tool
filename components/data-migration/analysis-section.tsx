@@ -4,15 +4,15 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { 
-  BarChart, Database, Table2, Filter, DownloadCloud, ArrowUpDown, Map 
+  BarChart, Database, Table2, DownloadCloud, Map 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DataAnalysis } from '@/types/shared-types';
 import GISVisualization from './gis-visualization';
-import { DataAnalysis } from '@/hooks/use-file-processor';
 
 interface AnalysisSectionProps {
   dataAnalysis: DataAnalysis | null;
-  parsedData: any[] | undefined;
+  parsedData?: Record<string, string | number | boolean | null>[];
 }
 
 /**
@@ -69,12 +69,17 @@ const AnalysisSection = ({ dataAnalysis, parsedData }: AnalysisSectionProps) => 
       
       if (!latField || !lonField) return null;
       
+      const lat = parseFloat(String(row[latField] || '0'));
+      const lon = parseFloat(String(row[lonField] || '0'));
+      
+      if (isNaN(lat) || isNaN(lon)) return null;
+      
       return {
-        id: row.incident_id || row.id || Math.random().toString(36).substr(2, 9),
-        lat: parseFloat(row[latField]),
-        lon: parseFloat(row[lonField]),
-        name: row.address || row.incident_type || 'Location',
-        type: row.incident_type || 'Unknown'
+        id: String(row.incident_id || row.id || Math.random().toString(36).substring(2, 9)),
+        lat,
+        lon,
+        name: String(row.address || row.incident_type || 'Location'),
+        type: String(row.incident_type || 'Unknown')
       };
     }).filter(Boolean) : 
     [];
@@ -308,7 +313,7 @@ const AnalysisSection = ({ dataAnalysis, parsedData }: AnalysisSectionProps) => 
                       </TableHeader>
                       <TableBody>
                         {Object.entries(dataAnalysis.dataTypes)
-                          .filter(([_, type]) => type === 'Number' || type === 'Number (as string)')
+                          .filter(([type]) => type === 'Number' || type === 'Number (as string)')
                           .map(([column]) => (
                             <TableRow key={column}>
                               <TableCell className="font-medium">{column}</TableCell>
@@ -359,7 +364,7 @@ const AnalysisSection = ({ dataAnalysis, parsedData }: AnalysisSectionProps) => 
                       </TableHeader>
                       <TableBody>
                         {Object.entries(dataAnalysis.dataTypes)
-                          .filter(([_, type]) => type === 'Date')
+                          .filter(([type]) => type === 'Date')
                           .map(([column]) => (
                             <TableRow key={column}>
                               <TableCell className="font-medium">{column}</TableCell>
@@ -402,7 +407,7 @@ const AnalysisSection = ({ dataAnalysis, parsedData }: AnalysisSectionProps) => 
 /**
  * Helper function to infer date format from a sample
  */
-const inferDateFormat = (sample: any): string => {
+const inferDateFormat = (sample: unknown): string => {
   if (!sample) return 'Unknown';
   
   const dateStr = String(sample);

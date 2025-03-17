@@ -4,31 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { FileCheck, FileWarning, CheckSquare, AlertTriangle } from 'lucide-react';
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from '@/components/ui/accordion';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { FileCheck, FileWarning, CheckSquare } from 'lucide-react';
+import { ValidationRule, ValidationTestResults } from '@/types/shared-types';
 
 interface ValidationRulesProps {
-  data?: any[];
+  data?: Record<string, string | number | boolean | null>[];
+}
+
+interface RuleType {
+  value: string;
+  label: string;
 }
 
 /**
@@ -38,7 +23,7 @@ interface ValidationRulesProps {
  */
 const ValidationRules = ({ data }: ValidationRulesProps) => {
   const [activeTab, setActiveTab] = useState('rules');
-  const [rules, setRules] = useState([
+  const [rules, setRules] = useState<ValidationRule[]>([
     { id: 1, field: 'address', rule: 'required', message: 'Address is required', status: 'active' },
     { id: 2, field: 'incident_date', rule: 'date_format', params: 'YYYY-MM-DD', message: 'Invalid date format', status: 'active' },
     { id: 3, field: 'latitude', rule: 'range', params: { min: -90, max: 90 }, message: 'Latitude must be between -90 and 90', status: 'active' },
@@ -47,7 +32,8 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
     { id: 6, field: 'email', rule: 'regex', params: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}', message: 'Invalid email format', status: 'draft' }
   ]);
   
-  const [newRule, setNewRule] = useState({
+  const [newRule, setNewRule] = useState<ValidationRule>({
+    id: 0,
     field: '',
     rule: 'required',
     params: '',
@@ -55,10 +41,9 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
     status: 'draft'
   });
   
-  const [testResults, setTestResults] = useState<any>(null);
-  const [editMapping, setEditMapping] = useState<any>(null);
+  const [testResults, setTestResults] = useState<ValidationTestResults | null>(null);
   
-  const ruleTypes = [
+  const ruleTypes: RuleType[] = [
     { value: 'required', label: 'Required Field' },
     { value: 'length', label: 'String Length' },
     { value: 'range', label: 'Numeric Range' },
@@ -96,6 +81,7 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
     
     // Reset form
     setNewRule({
+      id: 0,
       field: '',
       rule: 'required',
       params: '',
@@ -107,7 +93,7 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
   /**
    * Update existing rule
    */
-  const updateRule = (id: number, field: string, value: string) => {
+  const updateRule = (id: number, field: keyof ValidationRule, value: string) => {
     setRules(rules.map(rule => 
       rule.id === id ? { ...rule, [field]: value } : rule
     ));
@@ -124,18 +110,18 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
    * Test rules against sample data
    */
   const testRules = () => {
-    const results = {
+    const results: ValidationTestResults = {
       total: sampleData.length,
       passed: 0,
       failed: 0,
-      records: [] as any[]
+      records: []
     };
     
     // For each data record
     sampleData.forEach(record => {
       const recordResult = {
         id: record.id,
-        errors: [] as any[],
+        errors: [] as { field: string; message: string; value: unknown }[],
         passed: true
       };
       
@@ -157,9 +143,9 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
             if (typeof value !== 'string') {
               valid = false;
             } else {
-              const params = typeof rule.params === 'object' ? rule.params : { min: 0, max: parseInt(rule.params as string) };
-              valid = value.length >= (params.min || 0) && 
-                     (params.max ? value.length <= params.max : true);
+              const lengthParams = typeof rule.params === 'object' ? rule.params : { min: 0, max: parseInt(rule.params as string) };
+              valid = value.length >= (lengthParams.min || 0) && 
+                     (lengthParams.max ? value.length <= lengthParams.max : true);
             }
             break;
             
@@ -167,9 +153,9 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
             if (typeof value !== 'number') {
               valid = false;
             } else {
-              const params = typeof rule.params === 'object' ? rule.params : JSON.parse(rule.params as string);
-              valid = value >= (params.min !== undefined ? params.min : -Infinity) && 
-                     value <= (params.max !== undefined ? params.max : Infinity);
+              const rangeParams = typeof rule.params === 'object' ? rule.params : JSON.parse(rule.params as string);
+              valid = value >= (rangeParams.min !== undefined ? rangeParams.min : -Infinity) && 
+                     value <= (rangeParams.max !== undefined ? rangeParams.max : Infinity);
             }
             break;
             
@@ -177,7 +163,7 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
             try {
               const regex = new RegExp(rule.params as string);
               valid = regex.test(String(value));
-            } catch (e) {
+            } catch {
               valid = false;
             }
             break;
@@ -187,7 +173,7 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
             if (rule.params === 'YYYY-MM-DD') {
               valid = /^\d{4}-\d{2}-\d{2}$/.test(String(value));
             } else {
-              valid = !isNaN(Date.parse(value));
+              valid = !isNaN(Date.parse(String(value)));
             }
             break;
             
@@ -262,49 +248,6 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-  
-  /**
-   * Open edit dialog
-   */
-  const openEditDialog = (mapping: any) => {
-    setEditMapping({ ...mapping });
-  };
-  
-  /**
-   * Save edit mapping
-   */
-  const saveEditMapping = () => {
-    if (!editMapping) return;
-    
-    setRules(rules.map(rule => 
-      rule.id === editMapping.id ? editMapping : rule
-    ));
-    
-    setEditMapping(null);
-  };
-  
-  /**
-   * Get confidence badge color
-   */
-  const getConfidenceBadge = (confidence: string) => {
-    switch (confidence) {
-      case 'high':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">High</Badge>;
-      case 'medium':
-        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Medium</Badge>;
-      case 'low':
-        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Low</Badge>;
-      case 'manual':
-        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Manual</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-  
-  // Calculate mapping completeness
-  const requiredTargetFields = 0;
-  const mappedRequiredFields = 0;
-  const completeness = Math.round((mappedRequiredFields / (requiredTargetFields || 1)) * 100);
   
   return (
     <div className="space-y-4">
@@ -404,7 +347,6 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
                             variant="ghost" 
                             size="icon"
                             onClick={() => deleteRule(rule.id)}
-                            aria-label="Delete rule"
                           >
                             ✕
                           </Button>
@@ -490,7 +432,7 @@ const ValidationRules = ({ data }: ValidationRulesProps) => {
                 <label className="block text-sm font-medium mb-1">Status</label>
                 <select
                   value={newRule.status}
-                  onChange={(e) => setNewRule({...newRule, status: e.target.value})}
+                  onChange={(e) => setNewRule({...newRule, status: e.target.value as 'active' | 'draft' | 'disabled'})}
                   className="w-full p-2 border rounded-md"
                 >
                   <option value="active">Active</option>
@@ -567,7 +509,7 @@ function validate${newRule.field ? newRule.field.charAt(0).toUpperCase() + newRu
     : newRule.rule === 'regex'
     ? `if (!/${newRule.params || '.*'}/.test(value)) return "${newRule.message || 'Invalid format'}";`
     : newRule.rule === 'allowed_values'
-    ? `if (!['${(typeof newRule.params === 'string' ? newRule.params : '').split(',').join("', '")}'].includes(value)) return "${newRule.message || 'Invalid value'}";`
+    ? `if (!['${typeof newRule.params === 'string' ? newRule.params : ''}'.split(',').join("', '")}'].includes(value)) return "${newRule.message || 'Invalid value'}";`
     : `// Add validation logic here`
   }
   return null; // No error
@@ -631,8 +573,8 @@ function validate${newRule.field ? newRule.field.charAt(0).toUpperCase() + newRu
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {testResults.records.map((record: any) => (
-                      <TableRow key={record.id}>
+                    {testResults.records.map(record => (
+                      <TableRow key={String(record.id)}>
                         <TableCell>{record.id}</TableCell>
                         <TableCell>
                           {record.passed ? (
@@ -648,7 +590,7 @@ function validate${newRule.field ? newRule.field.charAt(0).toUpperCase() + newRu
                         <TableCell>
                           {record.errors.length > 0 ? (
                             <div className="space-y-1">
-                              {record.errors.map((error: any, i: number) => (
+                              {record.errors.map((error, i) => (
                                 <div key={i} className="text-sm">
                                   <span className="font-medium">{error.field}:</span> {error.message}
                                   <div className="text-xs text-muted-foreground">
@@ -672,83 +614,6 @@ function validate${newRule.field ? newRule.field.charAt(0).toUpperCase() + newRu
           )}
         </TabsContent>
       </Tabs>
-      
-      {/* Edit Mapping Dialog */}
-      {editMapping && (
-        <Dialog open={!!editMapping} onOpenChange={(open) => {
-          if (!open) setEditMapping(null);
-        }}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Field Mapping</DialogTitle>
-              <DialogDescription>
-                Configure how the source field maps to the target field
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Source Field</label>
-                  <select 
-                    value={editMapping.field}
-                    onChange={(e) => setEditMapping({...editMapping, field: e.target.value})}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Select field</option>
-                    {Object.keys(sampleData[0] || {}).map(field => (
-                      <option key={field} value={field}>{field}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Rule Type</label>
-                  <select 
-                    value={editMapping.rule}
-                    onChange={(e) => setEditMapping({...editMapping, rule: e.target.value})}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    {ruleTypes.map(type => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Parameters</label>
-                <Input
-                  value={typeof editMapping.params === 'string' ? editMapping.params : JSON.stringify(editMapping.params)}
-                  onChange={(e) => setEditMapping({...editMapping, params: e.target.value})}
-                  placeholder="Rule parameters"
-                  disabled={editMapping.rule === 'required'}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Error Message</label>
-                <Input
-                  value={editMapping.message}
-                  onChange={(e) => setEditMapping({...editMapping, message: e.target.value})}
-                  placeholder="Error message"
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditMapping(null)}>
-                Cancel
-              </Button>
-              <Button onClick={saveEditMapping}>
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 };

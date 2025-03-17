@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
@@ -13,44 +13,11 @@ import {
   ClockIcon,
   FileCheck,
   Workflow, 
-  Code,
   RefreshCw,
   Terminal,
   XCircle 
 } from 'lucide-react';
-
-/**
- * Step interface defining a migration step
- */
-interface MigrationStep {
-  id: string;
-  name: string;
-  description: string;
-  status: 'pending' | 'running' | 'completed' | 'error';
-  message?: string;
-}
-
-/**
- * Migration stats interface
- */
-interface MigrationStats {
-  totalRecords: number;
-  processedRecords: number;
-  successRecords: number;
-  errorRecords: number;
-  skippedRecords: number;
-  startTime?: Date;
-  endTime?: Date;
-}
-
-/**
- * Log entry interface
- */
-interface LogEntry {
-  timestamp: Date;
-  level: 'info' | 'warn' | 'error' | 'success';
-  message: string;
-}
+import { LogEntry, MigrationStats, MigrationStep } from '@/types/shared-types';
 
 /**
  * Execution Section Component
@@ -59,7 +26,7 @@ interface LogEntry {
  */
 const ExecutionSection = () => {
   // Form submission hook
-  const { isSubmitting, submitSuccess, submitError, submitForm } = useFormSubmission<any>();
+  const { isSubmitting } = useFormSubmission<Record<string, unknown>>();
 
   // Migration state
   const [migrationActive, setMigrationActive] = useState<boolean>(false);

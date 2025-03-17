@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DbTable } from '@/types/shared-types';
 
 interface SQLQueryBuilderProps {
-  tables?: Record<string, { columns: string[] }>;
+  tables?: Record<string, DbTable>;
 }
 
 /**
  * SQL Query Builder Component
  * Allows interactive creation of SQL queries for data extraction and transformation.
- * SQL ability to create complex queries.
+ * Demonstrates advanced SQL knowledge and ability to create complex queries.
  */
 const SQLQueryBuilder = ({ tables }: SQLQueryBuilderProps) => {
   const [selectedTable, setSelectedTable] = useState('');
@@ -28,7 +29,7 @@ const SQLQueryBuilder = ({ tables }: SQLQueryBuilderProps) => {
   const [generatedSQL, setGeneratedSQL] = useState('');
   
   // Sample tables data structure for demo
-  const sampleTables = tables || {
+  const sampleTables = useMemo(() => tables || {
     'incidents': {
       columns: ['id', 'incident_date', 'incident_type', 'location_id', 'status', 'priority', 'reported_by']
     },
@@ -41,12 +42,12 @@ const SQLQueryBuilder = ({ tables }: SQLQueryBuilderProps) => {
     'personnel': {
       columns: ['id', 'first_name', 'last_name', 'rank', 'unit_id', 'status']
     }
-  };
+  }, [tables]);
   
   /**
    * Function to generate the SQL query based on selections
    */
-  const generateQuery = () => {
+  const generateQuery = useCallback(() => {
     if (!selectedTable || selectedColumns.length === 0) {
       setGeneratedSQL('');
       return;
@@ -98,7 +99,8 @@ const SQLQueryBuilder = ({ tables }: SQLQueryBuilderProps) => {
     
     query += ';';
     setGeneratedSQL(query);
-  };
+  }, [selectedTable, selectedColumns, conditions, joinTable, 
+      joinColumn, joinTargetColumn, orderByColumn, orderDirection, limit, sampleTables]);
   
   /**
    * Add a condition
@@ -136,8 +138,7 @@ const SQLQueryBuilder = ({ tables }: SQLQueryBuilderProps) => {
   // Effect to generate query whenever selections change
   useEffect(() => {
     generateQuery();
-  }, [selectedTable, selectedColumns, conditions, joinTable, 
-      joinColumn, joinTargetColumn, orderByColumn, orderDirection, limit]);
+  }, [generateQuery]);
   
   return (
     <div className="space-y-6">
@@ -249,8 +250,8 @@ const SQLQueryBuilder = ({ tables }: SQLQueryBuilderProps) => {
                       >
                         <option value="=">=</option>
                         <option value="<>">≠</option>
-                        <option value=">"></option>
-                        <option value="<"></option>
+                        <option value=">">{'>'}</option>
+                        <option value="<">{'<'}</option>
                         <option value=">=">≥</option>
                         <option value="<=">≤</option>
                         <option value="LIKE">LIKE</option>

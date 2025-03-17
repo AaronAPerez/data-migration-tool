@@ -3,12 +3,15 @@
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import UploadSection from '@/components/data-migration/upload-section';
+import AnalysisSection from '@/components/data-migration/analysis-section';
 import MappingSection from '@/components/data-migration/mapping-section';
 import SQLQueryBuilder from '@/components/data-migration/sql-query-builder';
 import ValidationRules from '@/components/data-migration/validation-rules';
 import { FileUp, Database, ArrowRightLeft, Code, CheckSquare } from 'lucide-react';
+import UserGuide from '@/components/data-migration/UserGuide';
 import { useFileProcessor } from '@/hooks/use-file-processor';
-import AnalysisSection from '@/components/data-migration/analysis-section';
+import "./globals.css";
+
 
 /**
  * Main Data Migration Tool Page
@@ -59,6 +62,9 @@ export default function DataMigrationTool() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* Add User Guide component */}
+      <UserGuide />
+      
       <header className="mb-8">
         <h1 className="text-3xl font-bold">Data Migration Tool</h1>
         <p className="text-muted-foreground mt-1">

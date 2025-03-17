@@ -34,28 +34,11 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion';
-import { cn } from '@/lib/utils';
-
-interface FieldInfo {
-  name: string;
-  type: string;
-  sample?: any;
-  required?: boolean;
-  description?: string;
-}
+import { FieldInfo, MappingItem } from '@/types/shared-types';
 
 interface MappingProps {
   sourceFields?: FieldInfo[];
   targetFields?: FieldInfo[];
-}
-
-interface MappingItem {
-  id: number;
-  sourceField: string;
-  targetField: string;
-  transform: string;
-  transformParams?: any;
-  confidence: string;
 }
 
 /**
@@ -111,14 +94,15 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
   
   const completeness = Math.round((mappedRequiredFields / requiredTargetFields) * 100);
   
-  /**
-   * Update mapping
-   */
-  const updateMapping = (id: number, field: string, value: string) => {
-    setMappings(mappings.map(mapping => 
-      mapping.id === id ? { ...mapping, [field]: value } : mapping
-    ));
-  };
+  // Note: This function is kept for future features but is not currently used
+  // /**
+  //  * Update mapping
+  //  */
+  // const updateMapping = (id: number, field: string, value: string) => {
+  //   setMappings(mappings.map(mapping => 
+  //     mapping.id === id ? { ...mapping, [field]: value } : mapping
+  //   ));
+  // };
   
   /**
    * Add new mapping
@@ -164,7 +148,7 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
   /**
    * Get confidence badge
    */
-  const getConfidenceBadge = (confidence: string) => {
+  const getConfidenceBadge = (confidence: 'high' | 'medium' | 'low' | 'manual') => {
     switch (confidence) {
       case 'high':
         return (
@@ -208,12 +192,12 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Combine</span>
             <div className="space-x-1">
-              {mapping.transformParams?.sourceFields?.map((field: string, idx: number) => (
+              {mapping.transformParams?.sourceFields?.map((field, idx) => (
                 <React.Fragment key={field}>
                   <Badge variant="outline" className="bg-gray-50">
                     {field}
                   </Badge>
-                  {idx < mapping.transformParams.sourceFields.length - 1 && "+"}
+                  {idx < (mapping.transformParams?.sourceFields?.length || 0) - 1 && "+"}
                 </React.Fragment>
               ))}
             </div>
@@ -224,7 +208,7 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Object from</span>
             <div className="flex flex-wrap gap-1">
-              {mapping.transformParams?.properties?.map((prop: string) => (
+              {mapping.transformParams?.properties?.map((prop) => (
                 <Badge key={prop} variant="outline" className="bg-gray-50">
                   {prop}
                 </Badge>
@@ -342,7 +326,7 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
                         <div className="flex items-center mt-1 gap-2">
                           <span className="text-xs text-muted-foreground">Sample:</span>
                           <code className="text-xs bg-muted/30 px-2 py-0.5 rounded">
-                            {sampleSourceFields.find(f => f.name === mapping.sourceField)?.sample}
+                            {String(sampleSourceFields.find(f => f.name === mapping.sourceField)?.sample || '')}
                           </code>
                         </div>
                       )}
@@ -540,7 +524,7 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
                     {/* Show sample if available */}
                     {editMapping.sourceField && sampleSourceFields.find(f => f.name === editMapping.sourceField)?.sample && (
                       <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700 font-mono">
-                        Sample: {sampleSourceFields.find(f => f.name === editMapping.sourceField)?.sample}
+                        Sample: {String(sampleSourceFields.find(f => f.name === editMapping.sourceField)?.sample || '')}
                       </div>
                     )}
                   </div>
@@ -612,7 +596,7 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
                               const currentFields = editMapping.transformParams?.sourceFields || [];
                               const updatedFields = e.target.checked
                                 ? [...currentFields, field.name]
-                                : currentFields.filter((f: string) => f !== field.name);
+                                : currentFields.filter((f) => f !== field.name);
                               
                               setEditMapping({
                                 ...editMapping,
@@ -741,7 +725,7 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {(editMapping.transformParams?.valueMappings || []).map((mapping: any, index: number) => (
+                          {(editMapping.transformParams?.valueMappings || []).map((mapping, index: number) => (
                             <TableRow key={index} className="hover:bg-gray-50">
                               <TableCell className="p-2">
                                 <Input
@@ -848,7 +832,7 @@ const MappingSection = ({ sourceFields, targetFields }: MappingProps) => {
                   <label className="block text-sm font-medium text-gray-700">Mapping Confidence</label>
                   <Select 
                     value={editMapping.confidence}
-                    onValueChange={(value) => setEditMapping({...editMapping, confidence: value})}
+                    onValueChange={(value: 'manual' | 'high' | 'medium' | 'low') => setEditMapping({...editMapping, confidence: value})}
                   >
                     <SelectTrigger className="w-32 border-gray-300">
                       <SelectValue placeholder="Confidence" />
