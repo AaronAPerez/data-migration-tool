@@ -276,7 +276,7 @@ const AnalysisSection = ({ dataAnalysis, parsedData }: AnalysisSectionProps) => 
               </CardHeader>
               <CardContent>
                 {gisData && gisData.length > 0 ? (
-                  <GISVisualization data={gisData} />
+                  <GISVisualization data={[]}/>
                 ) : (
                   <div className="p-8 text-center text-muted-foreground">
                     <Map className="mx-auto h-12 w-12 opacity-20 mb-4" />

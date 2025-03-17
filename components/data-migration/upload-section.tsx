@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { FileUp, Database, FileArchive, FileSpreadsheet, AlertTriangle, CheckCircle, Download } from 'lucide-react';
-import { FileData } from '@/hooks/use-file-processor';
+import { FileData } from '@/types/shared-types';
 
 interface UploadSectionProps {
   fileData: FileData | null;
@@ -19,14 +19,14 @@ interface UploadSectionProps {
  * 
  * Handles file upload and displays upload status
  */
-const UploadSection: React.FC<UploadSectionProps> = ({
+const UploadSection = ({
   fileData,
   isProcessing,
   error,
   success,
   onFileUpload,
   onLoadSample
-}) => {
+}: UploadSectionProps) => {
   // File input reference
   const fileInputRef = useRef<HTMLInputElement>(null);
   

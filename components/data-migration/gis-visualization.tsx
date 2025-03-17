@@ -1,13 +1,28 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+// components/data-migration/gis-visualization.tsx
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Map } from 'lucide-react';
-import { GISPoint } from '@/types/shared-types';
+import { 
+  Map, 
+  ArrowRight,
+  CheckCircle,
+} from 'lucide-react';
 import * as d3 from 'd3';
 
-export interface GISVisualizationProps {
+/**
+ * Interface for geographic point data
+ */
+export interface GISPoint {
+  id: string | number;
+  lat: number;
+  lon: number;
+  name: string;
+  type: string;
+}
+
+interface GISVisualizationProps {
   data: GISPoint[];
 }
 
@@ -18,24 +33,32 @@ export interface GISVisualizationProps {
  * and interactive features.
  */
 const GISVisualization = ({ data }: GISVisualizationProps) => {
-  const [mapMode, setMapMode] = useState('points');
+  // Component state
+  const [mapMode, setMapMode] = useState<'points' | 'clusters' | 'heatmap'>('points');
   const [selectedPoint, setSelectedPoint] = useState<GISPoint | null>(null);
-  const [coordSystem ] = useState('wgs84');
+  const [coordSystem, setCoordSystem] = useState('wgs84');
   const [clusterRadius, setClusterRadius] = useState(50);
   const [showBounds, setShowBounds] = useState(true);
   const [showLabels, setShowLabels] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   
-  // Calculate bounding box
-  const minLat = Math.min(...data.map(d => d.lat)) - 0.01;
-  const maxLat = Math.max(...data.map(d => d.lat)) + 0.01;
-  const minLon = Math.min(...data.map(d => d.lon)) - 0.01;
-  const maxLon = Math.max(...data.map(d => d.lon)) + 0.01;
+  // Filter out any null or invalid points and ensure valid data
+  const validData = data.filter((point): point is GISPoint => 
+    point !== null && 
+    typeof point.lat === 'number' && 
+    typeof point.lon === 'number'
+  );
+  
+  // Calculate bounding box for the map
+  const minLat = Math.min(...validData.map(d => d.lat)) - 0.01;
+  const maxLat = Math.max(...validData.map(d => d.lat)) + 0.01;
+  const minLon = Math.min(...validData.map(d => d.lon)) - 0.01;
+  const maxLon = Math.max(...validData.map(d => d.lon)) + 0.01;
   
   /**
    * Projects geographical coordinates to SVG coordinates
    */
-  const project = useCallback((lat: number, lon: number) => {
+  const project = (lat: number, lon: number): [number, number] => {
     const width = 600;
     const height = 400;
     
@@ -43,35 +66,37 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
     const x = ((lon - minLon) / (maxLon - minLon)) * width;
     const y = height - ((lat - minLat) / (maxLat - minLat)) * height;
     
-    return [x, y] as [number, number];
-  }, [minLat, minLon, maxLat, maxLon]);
+    return [x, y];
+  };
   
   /**
    * Create clusters from points
    */
-  const createClusters = useCallback(() => {
-    // Simple clustering for demo purposes
-    const clusters: Array<{
+  const createClusters = () => {
+    // Define cluster type
+    type Cluster = {
       points: number[];
       center: [number, number];
       size: number;
-    }> = [];
+    };
+    
+    const clusters: Cluster[] = [];
     const assigned = new Set<number>();
     
-    data.forEach((point, i) => {
+    validData.forEach((point, i) => {
       if (assigned.has(i)) return;
       
       const cluster = [i];
       assigned.add(i);
       
       // Find nearby points
-      for (let j = 0; j < data.length; j++) {
+      for (let j = 0; j < validData.length; j++) {
         if (i === j || assigned.has(j)) continue;
         
-        const [x1, y1] = project(data[i].lat, data[i].lon);
-        const [x2, y2] = project(data[j].lat, data[j].lon);
+        const [x1, y1] = project(validData[i].lat, validData[i].lon);
+        const [x2, y2] = project(validData[j].lat, validData[j].lon);
         
-        // Calculate distance
+        // Calculate distance between points
         const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         
         if (dist < clusterRadius) {
@@ -80,9 +105,10 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
         }
       }
       
+      // Create a cluster if we have more than one point
       if (cluster.length > 1) {
-        // Calculate center
-        const clusterPoints = cluster.map(idx => data[idx]);
+        // Calculate center of cluster
+        const clusterPoints = cluster.map(idx => validData[idx]);
         const centerLat = clusterPoints.reduce((sum, p) => sum + p.lat, 0) / clusterPoints.length;
         const centerLon = clusterPoints.reduce((sum, p) => sum + p.lon, 0) / clusterPoints.length;
         
@@ -95,13 +121,29 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
     });
     
     return clusters;
-  }, [data, project, clusterRadius]);
+  };
+  
+  /**
+   * Get color based on point type
+   */
+  const getColorByType = (type: string): string => {
+    switch (type.toLowerCase()) {
+      case 'fire station': return '#dc3545'; // Red
+      case 'ems': return '#28a745'; // Green
+      case 'hospital': return '#17a2b8'; // Teal
+      case 'incident': return '#ffc107'; // Yellow
+      case 'specialzone': return '#6f42c1'; // Purple
+      case 'command': return '#0d6efd'; // Blue
+      case 'logistics': return '#fd7e14'; // Orange
+      default: return '#6c757d'; // Gray
+    }
+  };
   
   /**
    * Render the map visualization using D3
    */
   useEffect(() => {
-    if (!svgRef.current || data.length === 0) return;
+    if (!svgRef.current || validData.length === 0) return;
     
     // Clear SVG
     d3.select(svgRef.current).selectAll("*").remove();
@@ -154,6 +196,7 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
         .attr('stroke-dasharray', '5,5');
     }
     
+    // Draw visualization based on selected mode
     if (mapMode === 'clusters') {
       // Draw clusters
       const clusters = createClusters();
@@ -173,7 +216,7 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
         
         // Draw points in cluster
         cluster.points.forEach(idx => {
-          const point = data[idx];
+          const point = validData[idx];
           const [px, py] = project(point.lat, point.lon);
           
           svg.append('circle')
@@ -198,8 +241,8 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
           .text(cluster.size);
       });
       
-      // Draw standalone points
-      data.forEach((point, i) => {
+      // Draw standalone points (not in any cluster)
+      validData.forEach((point, i) => {
         if (clusters.some(c => c.points.includes(i))) return;
         
         const [px, py] = project(point.lat, point.lon);
@@ -214,9 +257,59 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
           .attr('cursor', 'pointer')
           .on('click', () => setSelectedPoint(point));
       });
+    } else if (mapMode === 'heatmap') {
+      // Draw connections between points
+      for (let i = 0; i < validData.length; i++) {
+        for (let j = i + 1; j < validData.length; j++) {
+          const [x1, y1] = project(validData[i].lat, validData[i].lon);
+          const [x2, y2] = project(validData[j].lat, validData[j].lon);
+          
+          // Calculate distance
+          const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+          
+          if (dist < 100) {
+            // Draw connection line with opacity based on distance
+            const opacity = 1 - (dist / 100);
+            
+            svg.append('line')
+              .attr('x1', x1)
+              .attr('y1', y1)
+              .attr('x2', x2)
+              .attr('y2', y2)
+              .attr('stroke', '#6c757d')
+              .attr('stroke-width', 1)
+              .attr('stroke-opacity', opacity);
+          }
+        }
+      }
+      
+      // Draw all points
+      validData.forEach(point => {
+        const [x, y] = project(point.lat, point.lon);
+        
+        svg.append('circle')
+          .attr('cx', x)
+          .attr('cy', y)
+          .attr('r', 6)
+          .attr('fill', getColorByType(point.type))
+          .attr('stroke', '#343a40')
+          .attr('stroke-width', 1)
+          .attr('cursor', 'pointer')
+          .on('click', () => setSelectedPoint(point));
+        
+        if (showLabels) {
+          svg.append('text')
+            .attr('x', x)
+            .attr('y', y - 10)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '10px')
+            .attr('fill', '#343a40')
+            .text(point.name);
+        }
+      });
     } else {
-      // Draw individual points
-      data.forEach(point => {
+      // Default: points mode - draw individual points
+      validData.forEach(point => {
         const [x, y] = project(point.lat, point.lon);
         
         svg.append('circle')
@@ -241,53 +334,11 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
       });
     }
     
-    // Draw connections if heatmap mode
-    if (mapMode === 'heatmap') {
-      // Draw connections between close points
-      for (let i = 0; i < data.length; i++) {
-        for (let j = i + 1; j < data.length; j++) {
-          const [x1, y1] = project(data[i].lat, data[i].lon);
-          const [x2, y2] = project(data[j].lat, data[j].lon);
-          
-          // Calculate distance
-          const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-          
-          if (dist < 100) {
-            // Draw connection line with opacity based on distance
-            const opacity = 1 - (dist / 100);
-            
-            svg.append('line')
-              .attr('x1', x1)
-              .attr('y1', y1)
-              .attr('x2', x2)
-              .attr('y2', y2)
-              .attr('stroke', '#6c757d')
-              .attr('stroke-width', 1)
-              .attr('stroke-opacity', opacity);
-          }
-        }
-      }
-    }
-  }, [data, mapMode, clusterRadius, showBounds, showLabels, project, createClusters, minLat, minLon, maxLat, maxLon]);
-  
-  /**
-   * Get color by point type
-   */
-  const getColorByType = (type: string) => {
-    switch (type) {
-      case 'Fire Station': return '#dc3545';
-      case 'EMS': return '#28a745';
-      case 'Hospital': return '#17a2b8';
-      case 'Incident': return '#ffc107';
-      case 'SpecialZone': return '#6f42c1';
-      case 'Command': return '#0d6efd';
-      case 'Logistics': return '#fd7e14';
-      default: return '#6c757d';
-    }
-  };
+  }, [validData, mapMode, clusterRadius, showBounds, showLabels, minLat, minLon, maxLat, maxLon]);
   
   return (
     <div className="space-y-4">
+      {/* Map controls */}
       <div className="flex items-center justify-between">
         <div className="space-x-2">
           <Button 
@@ -332,6 +383,7 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
         </div>
       </div>
       
+      {/* Cluster radius slider (only visible in clusters mode) */}
       {mapMode === 'clusters' && (
         <div className="flex items-center gap-4">
           <span className="text-sm">Cluster Radius:</span>
@@ -347,18 +399,12 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
         </div>
       )}
       
+      {/* Map container */}
       <div className="border rounded-lg overflow-hidden bg-white">
-        {data.length > 0 ? (
-          <svg ref={svgRef} width="600" height="400"></svg>
-        ) : (
-          <div className="p-8 text-center text-muted-foreground">
-            <Map className="mx-auto h-12 w-12 opacity-20 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Geographic Data</h3>
-            <p>No valid geographic data points available to visualize.</p>
-          </div>
-        )}
+        <svg ref={svgRef} width="600" height="400" aria-label="Geographic visualization"></svg>
       </div>
       
+      {/* Selected point details */}
       {selectedPoint && (
         <div className="p-4 border rounded-lg bg-muted">
           <div className="flex justify-between items-start">
@@ -383,12 +429,13 @@ const GISVisualization = ({ data }: GISVisualizationProps) => {
         </div>
       )}
       
+      {/* Footer with metadata */}
       <div className="flex justify-between text-sm text-muted-foreground pt-2">
         <div>
           Coordinate System: <Badge variant="outline">{coordSystem}</Badge>
         </div>
         <div>
-          Points: {data.length}
+          Points: {validData.length}
         </div>
       </div>
     </div>
